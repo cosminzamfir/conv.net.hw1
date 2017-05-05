@@ -3,6 +3,7 @@ import cs231n.data_utils as datautils
 import unittest
 import numpy as np
 import scipy.stats as stats
+import matplotlib.pyplot as plt
 
 class NearestNeighbour():
     def train(self, Xtr_rows, Ytr):
@@ -40,12 +41,14 @@ class KNearestNeighbour():
             distances = np.sum(abs(self.Xtr_rows - test_row), axis=1)
             best_k_distances_idx = np.argpartition(distances,k)[0:k]
             best_k_categories = self.Ytr[best_k_distances_idx]
-            return stats.mode(best_k_categories)[0][0]
+            print("Best categories", best_k_categories)
+            res[test_index] = stats.mode(best_k_categories)[0][0]
         return res
 
 
 class NearestNeighbourTest(unittest.TestCase):
-    def test1(self):
+
+    def testNearestNeighbour(self):
         Xtr, Ytr, Xte, Yte = datautils.load_CIFAR10('../../data/cifar10/')
         Xtr_rows = Xtr.reshape(Xtr.shape[0], 32 * 32 * 3)  # Xtr_rows becomes 50000 x 3072
         Xte_rows = Xte.reshape(Xte.shape[0], 32 * 32 * 3)  # Xte_rows becomes 10000 x 3072
@@ -54,6 +57,21 @@ class NearestNeighbourTest(unittest.TestCase):
         nn = NearestNeighbour()
         nn.train(Xtr_rows, Ytr)
         Yte_predict = nn.predict(Xte_rows)
-        print(Yte_predict)
-        print(Yte)
         print('accuracy: %f' % (np.mean(Yte_predict == Yte)))
+
+    def testKNearestNeightbour(self):
+        test_images = 10
+        validation_accuracies = []
+        Xtr, Ytr, Xte, Yte = datautils.load_CIFAR10('../../data/cifar10/')
+        Xtr_rows = Xtr.reshape(Xtr.shape[0], 32 * 32 * 3)  # Xtr_rows becomes 50000 x 3072
+        Xte_rows = Xte.reshape(Xte.shape[0], 32 * 32 * 3)  # Xte_rows becomes 10000 x 3072
+        Xte_rows = Xte_rows[0:test_images,:]
+        Yte = Yte[0:test_images]
+        nn = KNearestNeighbour()
+        nn.train(Xtr_rows, Ytr)
+        for k in [1,3,5,7,10,20,50,10]:
+            Yte_predict = nn.predict(Xte_rows,k)
+            acc = np.mean(Yte_predict == Yte)
+            print('accuracy: %f' % acc)
+            validation_accuracies.append(acc)
+        plt.bar(validation_accuracies)
